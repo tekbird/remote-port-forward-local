@@ -1,0 +1,22 @@
+package client;
+
+import javax.websocket.*;
+import javax.websocket.Endpoint;
+
+@ClientEndpoint
+public class WebsocketEndpoint : Endpoint {
+	@OnOpen
+	public void OnOpen(Session session) {
+
+	}
+
+	@OnMessage
+	public void OnData(byte[] bytes, Session session) {
+
+	}
+
+	@OnClose
+	public void OnClose(Session session, CloseReason reason) {
+
+	}
+}

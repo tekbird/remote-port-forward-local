@@ -1,0 +1,28 @@
+import java.net.InetSocketAddress;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+
+import org.pmw.tinylog.Logger;
+
+public class Main {
+
+	public static void main(String[] args) {
+		AsynchronousSocketChannel sockChannel = AsynchronousSocketChannel.open();
+		sockChannel.connect(new InetSocketAddress("localhost", 24), sockChannel,
+				new CompletionHandler<Void, AsynchronousSocketChannel>() {
+
+					@Override
+					public void completed(Void result, AsynchronousSocketChannel attachment) {
+						Logger.info("successfully connected to {} on port {}", HOST, port);
+						//SendReady();
+						StartRead(attachment);
+					}
+
+					@Override
+					public void failed(Throwable exc, AsynchronousSocketChannel attachment) {
+						Logger.error("failed to connect to {} on port {}: {}", HOST, port, exc.getMessage());
+					}
+				});
+	}
+
+}

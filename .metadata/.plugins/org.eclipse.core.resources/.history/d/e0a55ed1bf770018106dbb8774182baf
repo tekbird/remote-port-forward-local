@@ -1,0 +1,74 @@
+package client;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+
+import javax.websocket.ContainerProvider;
+import javax.websocket.DeploymentException;
+import javax.websocket.WebSocketContainer;
+import javax.websocket.Endpoint;
+import javax.websocket.Session;
+
+import org.pmw.tinylog.Logger;
+
+public class Proxy {
+
+	private Integer remotePort;
+	private Integer localPort;
+	private AsynchronousServerSocketChannel server;
+	private String serverUri;
+	private WebSocketContainer container;
+	private WebsocketEndpoint serverEndPoint;
+	private Session session;
+	private static String LOCALHOST = "localhost";
+
+	public Proxy(Integer localPort, String server) {
+		this.localPort = localPort;
+		this.serverUri = server;
+	}
+
+	public void Start() throws IOException {
+		StartLocalServer();
+	}
+
+	private void ConnectRemoteServer(AsynchronousSocketChannel client, AsynchronousServerSocketChannel server) throws DeploymentException, IOException {
+		container = ContainerProvider.getWebSocketContainer();
+		serverEndPoint = new WebsocketEndpoint();
+		session = container.connectToServer(serverEndPoint, URI.create(this.serverUri));
+		Logger.info("successfully connected to remote server");
+		
+	}
+
+	private void StartLocalServer() throws IOException {
+		server = AsynchronousServerSocketChannel.open();
+		server.bind(new InetSocketAddress(LOCALHOST, this.localPort));	
+		server.accept(server, new CompletionHandler<AsynchronousSocketChannel, AsynchronousServerSocketChannel>(){
+
+			@Override
+			public void completed(AsynchronousSocketChannel client, AsynchronousServerSocketChannel server) {
+				Logger.info("successfully accepted a client connection");
+				try {
+					ConnectRemoteServer(client, server);
+				} catch (DeploymentException e) {
+					
+				} catch (IOException e) {
+					
+				}
+			}
+
+			@Override
+			public void failed(Throwable exc, AsynchronousServerSocketChannel attachment) {
+				Logger.error("failed to accept a client connection");
+			}
+			
+		});
+	}
+
+	public void Stop() {
+	}
+
+}

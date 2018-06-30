@@ -1,0 +1,37 @@
+package client;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import javax.websocket.*;
+
+import org.pmw.tinylog.Logger;
+
+@ClientEndpoint
+public class WebSocketEndpoint extends Endpoint {
+
+	private AsynchronousServerSocketChannel serverSock;
+
+	public WebSocketEndpoint(AsynchronousServerSocketChannel serverSock) {
+		this.serverSock = serverSock;
+	}
+
+	@Override
+	public void onOpen(Session session, EndpointConfig config) {
+		Logger.info("onOpen: {}", session.getId());
+	}
+
+	@OnMessage
+	public void onMessage(byte[] bytes, Session session) {
+
+	}
+
+	@OnClose
+	public void onClose(Session session, CloseReason reason) {
+
+	}
+}

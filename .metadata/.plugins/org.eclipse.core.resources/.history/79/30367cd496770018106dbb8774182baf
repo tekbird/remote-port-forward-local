@@ -1,0 +1,90 @@
+package net.portforward.server;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.function.Function;
+import java.nio.channels.*;
+
+import javax.websocket.Session;
+
+import org.pmw.tinylog.Logger;
+
+public class Proxy {
+
+	private OutputStream outputStream;
+	private Socket clientSocket;
+	private InputStream inputStream;
+	private boolean configured;
+	private Session session;
+	private int port;
+	private UUID sessionId;
+
+	private static byte[] READY_COMMAND = new byte[] { (byte) 0xff, (byte) 0xff };
+	private static String HOST = "localhost";
+
+	public Proxy(int port, Session session, UUID sessionId) {
+		this.port = port;
+		this.session = session;
+		this.sessionId = sessionId;
+		Logger.info("new proxy instance created for session id {} on port {}", sessionId, port);
+	}
+
+	public void Start() throws IOException {
+		AsynchronousSocketChannel sockChannel = AsynchronousSocketChannel.open();
+		int port = this.port;
+		sockChannel.connect(new InetSocketAddress(HOST, this.port), sockChannel,
+				new CompletionHandler<Void, AsynchronousSocketChannel>() {
+
+					@Override
+					public void completed(Void result, AsynchronousSocketChannel attachment) {
+						Logger.info("successfully connected to {} on port {}", HOST, port);
+
+						StartRead(attachment);
+					}
+
+					@Override
+					public void failed(Throwable exc, AsynchronousSocketChannel attachment) {
+						Logger.error("failed to connect to {} on port {}: {}", HOST, port, exc.getMessage());
+					}
+				});
+		Logger.info("proxy setup success for session id {}", this.sessionId);
+	}
+
+	protected void StartRead(AsynchronousSocketChannel socket) {
+		ByteBuffer buffer = ByteBuffer.allocate(2048);
+		Session session = this.session;
+		UUID sessionId = this.sessionId;
+		socket.read(buffer, socket, new CompletionHandler<Integer, AsynchronousSocketChannel>() {
+
+			@Override
+			public void completed(Integer result, AsynchronousSocketChannel attachment) {
+				Logger.info("read {} bytes for session id {}", result, sessionId);
+
+				try {
+					session.getBasicRemote().sendBinary(buffer);
+					Logger.info("sent {} bytes to session id {}", result, sessionId);
+				} catch (IOException e) {
+					Logger.error("failed to send data to websocket session: {}", e.getMessage());
+				}
+				
+				StartRead(attachment);
+			}
+
+			@Override
+			public void failed(Throwable exc, AsynchronousSocketChannel attachment) {
+				Logger.error("failed to read in session id {}: {}", sessionId, exc.getMessage());
+			}
+
+		});
+	}
+
+}

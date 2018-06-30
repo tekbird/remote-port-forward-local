@@ -1,0 +1,11 @@
+package client;
+
+import javax.websocket.*;
+
+@ClientEndpoint
+public class WebsocketEndpoint {
+	@OnOpen
+	public void onOpen(Session session) {
+
+	}
+}

@@ -1,0 +1,61 @@
+package service;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+import java.util.UUID;
+
+import javax.websocket.Session;
+
+import org.pmw.tinylog.Logger;
+
+public class Main {
+
+	public static void main(String[] args) throws IOException {
+		AsynchronousSocketChannel sockChannel = AsynchronousSocketChannel.open();
+		sockChannel.connect(new InetSocketAddress("localhost", 23), sockChannel,
+				new CompletionHandler<Void, AsynchronousSocketChannel>() {
+
+					@Override
+					public void completed(Void result, AsynchronousSocketChannel attachment) {
+						Logger.info("successfully connected to {} on port {}", HOST, port);
+						// SendReady();
+						StartRead(attachment);
+					}
+
+					@Override
+					public void failed(Throwable exc, AsynchronousSocketChannel attachment) {
+						Logger.error("failed to connect to {} on port {}: {}", HOST, port, exc.getMessage());
+					}
+				});
+
+		System.in.read();
+	}
+
+	private static void StartRead(AsynchronousSocketChannel socket) {
+		ByteBuffer buffer = ByteBuffer.allocate(2048);
+		if (socket.isOpen()) {
+			socket.read(buffer, socket, new CompletionHandler<Integer, AsynchronousSocketChannel>() {
+
+				@Override
+				public void completed(Integer size, AsynchronousSocketChannel attachment) {
+					if (size != -1) {
+
+						socket.write(buffer.get(buffer.array(), 0, size));
+					}
+
+					StartRead(attachment);
+				}
+
+				@Override
+				public void failed(Throwable exc, AsynchronousSocketChannel attachment) {
+				}
+
+			});
+		} else {
+		}
+	}
+
+}

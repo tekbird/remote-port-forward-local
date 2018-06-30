@@ -1,0 +1,38 @@
+package net.portforward.server;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
+
+import javax.websocket.Session;
+
+public class WebsocketProxy {
+	private Session session;
+	private int port;
+	private AsynchronousSocketChannel channel;
+
+	public WebsocketProxy(Session session, int port) {
+		this.session = session;
+		this.port = port;
+	}
+
+	public Session getSession() {
+		return session;
+	}
+
+	public int getPort() {
+		return port;
+	}
+	
+	public String getSessionId() {
+		return session.getId();
+	}
+
+	public void setSocket(AsynchronousSocketChannel channel) {
+		this.channel = channel;		
+	}
+
+	public void sendData(ByteBuffer buffer) throws IOException {
+		session.getBasicRemote().sendBinary(buffer);
+	}
+}

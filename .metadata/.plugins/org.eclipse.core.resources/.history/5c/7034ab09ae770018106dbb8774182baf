@@ -1,0 +1,53 @@
+package client;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+
+import org.pmw.tinylog.Logger;
+
+public class Proxy {
+
+	private Integer remotePort;
+	private Integer localPort;
+	private AsynchronousServerSocketChannel server;
+	private static String LOCALHOST = "localhost";
+
+	public Proxy(Integer localPort, Integer remotePort) {
+		this.localPort = localPort;
+		this.remotePort = remotePort;
+	}
+
+	public void Start() throws IOException {
+		StartLocalServer();
+	}
+
+	private void ConnectRemoteServer(AsynchronousSocketChannel client, AsynchronousServerSocketChannel server2) {
+
+	}
+
+	private void StartLocalServer() throws IOException {
+		server = AsynchronousServerSocketChannel.open();
+		server.bind(new InetSocketAddress(LOCALHOST, this.localPort));	
+		server.accept(server, new CompletionHandler<AsynchronousSocketChannel, AsynchronousServerSocketChannel>(){
+
+			@Override
+			public void completed(AsynchronousSocketChannel client, AsynchronousServerSocketChannel server) {
+				Logger.info("successfully accepted a client connection");
+				ConnectRemoteServer(client, server);
+			}
+
+			@Override
+			public void failed(Throwable exc, AsynchronousServerSocketChannel attachment) {
+				Logger.error("failed to accept a client connection");
+			}
+			
+		});
+	}
+
+	public void Stop() {
+	}
+
+}

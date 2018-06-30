@@ -1,0 +1,36 @@
+package net.portforward.server;
+
+import java.io.IOException;
+
+import javax.websocket.OnClose;
+import javax.websocket.OnError;
+import javax.websocket.OnMessage;
+import javax.websocket.OnOpen;
+import javax.websocket.Session;
+import javax.websocket.server.PathParam;
+import javax.websocket.server.ServerEndpoint;
+import org.pmw.tinylog.Logger;
+
+@ServerEndpoint(value = "/ep")
+public class EndPoint {
+
+	@OnOpen
+	public void onOpen(Session session) throws IOException {
+		Logger.info("onOpen: {}", session.getId());
+	}
+
+	@OnMessage
+	public void onMessage(Session session, byte[] bytes) throws IOException {
+		Logger.info("onMessage: {}", session.getId());
+	}
+
+	@OnClose
+	public void onClose(Session session) throws IOException {
+		Logger.info("onClose: {}", session.getId());
+	}
+
+	@OnError
+	public void onError(Session session, Throwable throwable) {
+		Logger.info("onError: {}", session.getId());
+	}
+}

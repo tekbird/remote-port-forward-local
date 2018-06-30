@@ -1,0 +1,16 @@
+package client;
+
+import java.util.*;
+
+public class BufferedData {
+	
+	public BufferedData() {
+		data = new ArrayList<byte[]>();
+	}
+	
+	private List<byte[]> data;
+
+	public List<byte[]> getData() {
+		return data;
+	}
+}

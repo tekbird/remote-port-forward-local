@@ -1,0 +1,36 @@
+package client;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.nio.channels.AsynchronousServerSocketChannel;
+
+import javax.websocket.ContainerProvider;
+import javax.websocket.DeploymentException;
+import javax.websocket.WebSocketContainer;
+
+public class PortAccessService {
+
+	private URI serverUri;
+
+	public PortAccessService(String serverUri) {
+		this.serverUri = URI.create(serverUri);
+	}
+
+	public void start(Integer localPort) throws DeploymentException, IOException {
+		startLocalPort(localPort);		
+		startRemotePort();
+	}
+
+	private void startRemotePort() throws DeploymentException, IOException {
+		WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+		
+		container.connectToServer(new WebSocketEndpoint(), this.serverUri);
+	}
+
+	private void startLocalPort(Integer localPort) {
+		InetSocketAddress sockAddr = new InetSocketAddress("localhost", localPort);
+		AsynchronousServerSocketChannel serverSock = AsynchronousServerSocketChannel.open().bind(sockAddr);
+	}
+
+}

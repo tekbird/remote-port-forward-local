@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<qualifiedTypeNameHistroy>
+<fullyQualifiedTypeName name="org.glassfish.jersey.server.ResourceConfig"/>
+<fullyQualifiedTypeName name="javax.ws.rs.Path"/>
+<fullyQualifiedTypeName name="javax.ws.rs.ApplicationPath"/>
+<fullyQualifiedTypeName name="javax.websocket.server.ServerEndpoint"/>
+<fullyQualifiedTypeName name="javax.websocket.OnOpen"/>
+<fullyQualifiedTypeName name="java.io.IOException"/>
+<fullyQualifiedTypeName name="org.glassfish.jersey.message.internal.TracingInfo.Message"/>
+<fullyQualifiedTypeName name="org.pmw.tinylog.Configurator"/>
+<fullyQualifiedTypeName name="java.io.DataOutputStream"/>
+<fullyQualifiedTypeName name="java.io.BufferedReader"/>
+<fullyQualifiedTypeName name="java.io.InputStreamReader"/>
+<fullyQualifiedTypeName name="java.util.function.Function"/>
+<fullyQualifiedTypeName name="java.util.UUID"/>
+<fullyQualifiedTypeName name="java.nio.channels.AsynchronousServerSocketChannel"/>
+<fullyQualifiedTypeName name="java.net.InetSocketAddress"/>
+<fullyQualifiedTypeName name="java.nio.channels.CompletionHandler"/>
+<fullyQualifiedTypeName name="java.nio.channels.AsynchronousSocketChannel"/>
+<fullyQualifiedTypeName name="javax.websocket.ClientEndpoint"/>
+<fullyQualifiedTypeName name="javax.websocket.ContainerProvider"/>
+<fullyQualifiedTypeName name="javax.websocket.WebSocketContainer"/>
+<fullyQualifiedTypeName name="java.net.URI"/>
+<fullyQualifiedTypeName name="javax.websocket.OnMessage"/>
+<fullyQualifiedTypeName name="javax.websocket.OnClose"/>
+<fullyQualifiedTypeName name="client.WebsocketEndpoint"/>
+<fullyQualifiedTypeName name="javax.websocket.Endpoint"/>
+<fullyQualifiedTypeName name="javax.websocket.Session"/>
+<fullyQualifiedTypeName name="java.nio.ByteBuffer"/>
+<fullyQualifiedTypeName name="org.pmw.tinylog.Logger"/>
+<fullyQualifiedTypeName name="java.util.concurrent.Callable"/>
+<fullyQualifiedTypeName name="java.util.function.Supplier"/>
+<fullyQualifiedTypeName name="javax.swing.Action"/>
+<fullyQualifiedTypeName name="java.util.function.Consumer"/>
+<fullyQualifiedTypeName name="org.glassfish.tyrus.client.ClientManager"/>
+<fullyQualifiedTypeName name="java.util.concurrent.Future"/>
+<fullyQualifiedTypeName name="java.net.Socket"/>
+<fullyQualifiedTypeName name="java.nio.channels.SocketChannel"/>
+</qualifiedTypeNameHistroy>

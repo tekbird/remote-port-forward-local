@@ -1,0 +1,26 @@
+package client;
+
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
+
+import javax.websocket.MessageHandler.Partial;
+import javax.websocket.MessageHandler.Whole;
+import javax.websocket.Session;
+
+import org.pmw.tinylog.Logger;
+
+public class WebSocketMessageHandler implements Partial<ByteBuffer> {
+
+	private AsynchronousSocketChannel serverSock;
+
+	public WebSocketMessageHandler(AsynchronousSocketChannel serverSock) {
+		this.serverSock = serverSock;
+	}
+
+	@Override
+	public void onMessage(ByteBuffer partialMessage, boolean last) {
+		this.serverSock.write(partialMessage);
+		Logger.info("sent {} bytes to socket channel", partialMessage.limit());
+	}
+
+}

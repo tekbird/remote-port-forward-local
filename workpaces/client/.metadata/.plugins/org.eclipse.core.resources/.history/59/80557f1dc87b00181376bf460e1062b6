@@ -1,0 +1,11 @@
+package client;
+
+public class PortAccessService {
+
+	private String serverUri;
+
+	public PortAccessService(String serverUri) {
+		this.serverUri = serverUri;
+	}
+
+}

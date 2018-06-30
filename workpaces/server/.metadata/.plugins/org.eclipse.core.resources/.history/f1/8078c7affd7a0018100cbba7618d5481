@@ -1,0 +1,29 @@
+package net.portforward.server;
+
+import javax.websocket.Session;
+
+public class WebsocketProxy {
+	private Session session;
+	private int port;
+
+	public WebsocketProxy(Session session, int port) {
+		this.session = session;
+		this.setPort(port);
+	}
+
+	public Session getSession() {
+		return session;
+	}
+
+	public void setSession(Session session) {
+		this.session = session;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public void setPort(int port) {
+		this.port = port;
+	}
+}

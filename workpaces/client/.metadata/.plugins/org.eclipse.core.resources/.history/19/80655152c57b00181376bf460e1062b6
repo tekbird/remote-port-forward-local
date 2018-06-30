@@ -1,0 +1,22 @@
+package client;
+
+import java.io.IOException;
+
+import org.pmw.tinylog.Logger;
+
+public class Main {
+
+	public static void main(String[] args) throws IOException {
+		if (args.length == 3) {
+			
+			Integer localPort = Integer.parseInt(args[0]);
+			Integer remotePort = Integer.parseInt(args[1]);
+			String websocketUrl = args[2];
+			String serverUri = websocketUrl + "/" + remotePort;
+			
+			System.in.read();
+		} else {
+			Logger.error("invalid parameters. usage: client <local-port> <remote-port> <websocket-url>");
+		}
+	}
+}

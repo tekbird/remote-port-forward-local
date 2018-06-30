@@ -1,0 +1,15 @@
+package client;
+
+import org.pmw.tinylog.Logger;
+
+public class Main {
+
+	public static void main(String[] args) {
+		if (args.length == 2) {
+
+		} else {
+			Logger.info("invalid number of arguments, expected two. 1: local port, 2: remote port");
+		}
+	}
+
+}

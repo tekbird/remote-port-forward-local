@@ -1,0 +1,80 @@
+package service;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import org.pmw.tinylog.Logger;
+
+public class Main {
+
+	public static void main(String[] args) throws IOException {
+		AsynchronousServerSocketChannel server = AsynchronousServerSocketChannel.open();
+		server.bind(new InetSocketAddress("localhost", 24));
+		server.accept(server, new CompletionHandler<AsynchronousSocketChannel, AsynchronousServerSocketChannel>() {
+
+			@Override
+			public void completed(AsynchronousSocketChannel client, AsynchronousServerSocketChannel server) {
+				Logger.info("connection established");
+				StartRead(client, server);
+			}
+
+			@Override
+			public void failed(Throwable exc, AsynchronousServerSocketChannel attachment) {
+				Logger.error("failed to accept a client connection");
+			}
+
+		});
+
+		System.in.read();
+	}
+
+	private static void StartRead(AsynchronousSocketChannel socket, AsynchronousServerSocketChannel server) {
+		ByteBuffer buffer = ByteBuffer.allocate(2048);
+		if (socket.isOpen()) {
+			Logger.info("starting to read");
+			socket.read(buffer, socket, new CompletionHandler<Integer, AsynchronousSocketChannel>() {
+
+				@Override
+				public void completed(Integer size, AsynchronousSocketChannel attachment) {
+					Logger.info("read {} bytes", size);
+					if (size != -1) {
+						byte[] sendingBytes = new byte[size];
+						buffer.get(sendingBytes, 0, size);
+						ByteBuffer skimmedBytes = ByteBuffer.wrap(sendingBytes);
+						socket.write(skimmedBytes, null, new CompletionHandler<Integer, Void>(){
+
+							@Override
+							public void completed(Integer result, Void attachment) {
+								Logger.info("written {} bytes", result);
+							}
+
+							@Override
+							public void failed(Throwable exc, Void attachment) {
+								Logger.error("failed to write bytes");
+							}
+							
+						});
+
+					}
+
+					StartRead(socket, server);
+				}
+
+				@Override
+				public void failed(Throwable exc, AsynchronousSocketChannel attachment) {
+				}
+
+			});
+		} else {
+			Logger.error("socket closed");
+		}
+	}
+
+}

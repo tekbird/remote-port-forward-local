@@ -1,0 +1,18 @@
+package client;
+
+public class Proxy {
+
+	private Integer remotePort;
+	private Integer localPort;
+
+	public Proxy(Integer localPort, Integer remotePort) {
+		this.localPort = localPort;
+		this.remotePort = remotePort;
+	}
+
+	public void Start() {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

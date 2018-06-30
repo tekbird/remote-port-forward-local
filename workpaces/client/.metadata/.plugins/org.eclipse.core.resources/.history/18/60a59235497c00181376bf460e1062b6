@@ -1,0 +1,103 @@
+package client;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import javax.websocket.*;
+import javax.websocket.MessageHandler.Partial;
+import javax.websocket.MessageHandler.Whole;
+
+import org.pmw.tinylog.Logger;
+
+@ClientEndpoint
+public class WebSocketEndpoint extends Endpoint {
+
+	private AsynchronousSocketChannel serverSock;
+	private ByteBuffer buffer = ByteBuffer.allocate(4096);
+	private Queue<ByteBuffer> bufferQueue = new LinkedList<ByteBuffer>();
+	private static ScheduledExecutorService bufferScheduler = new ScheduledThreadPoolExecutor(4);
+
+	public WebSocketEndpoint(AsynchronousSocketChannel sockChannel) {
+		this.serverSock = sockChannel;
+	}
+
+	@Override
+	public void onOpen(Session session, EndpointConfig config) {
+		Logger.info("onOpen: {}", session.getId());
+		Partial<ByteBuffer> onMessageHandler = new WebSocketMessageHandler(serverSock);
+		session.addMessageHandler(ByteBuffer.class, onMessageHandler);
+		Runnable bufferFlusher = new Runnable() {
+
+			@Override
+			public void run() {
+				Logger.warn("running buffer flusher");
+				Integer currentSize = bufferQueue.size();
+				List<ByteBuffer> currentItems = new ArrayList<ByteBuffer>(currentSize);
+				Integer totalSize = 0;
+				for (int i = 0; i < currentSize; i++) {
+					ByteBuffer peekedItem = bufferQueue.peek();
+					totalSize += peekedItem.limit();
+					if(totalSize > 4096) {
+						break;
+					}else {
+						currentItems.add(bufferQueue.remove());
+					}					
+				}
+				session.getBasicRemote().sendBinary(buffer);
+			}
+
+		};
+		bufferScheduler.scheduleAtFixedRate(bufferFlusher, 0, 100, TimeUnit.MILLISECONDS);
+		startRead(session);
+	}
+
+	private void startRead(Session session) {
+
+		this.serverSock.read(buffer, null, new CompletionHandler<Integer, Void>() {
+
+			@Override
+			public void completed(Integer length, Void v) {
+				if (length > 0) {
+					buffer.flip();
+					bufferQueue.add(buffer);
+				}
+				if (serverSock.isOpen()) {
+
+					startRead(session);
+				}
+			}
+
+			@Override
+			public void failed(Throwable exc, Void v) {
+				Logger.error("failed to read: {}", exc.getMessage());
+			}
+
+		});
+	}
+
+	@Override
+	public void onClose(Session session, CloseReason reason) {
+		Logger.info("onClose: {}", session.getId());
+		if (serverSock.isOpen()) {
+			try {
+				serverSock.close();
+			} catch (IOException e) {
+				Logger.error("failed to close socket: {}", e.getMessage());
+				e.printStackTrace();
+			}
+		}
+	}
+}

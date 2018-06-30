@@ -1,0 +1,17 @@
+package client;
+
+import javax.websocket.ContainerProvider;
+
+public class PortAccessService {
+
+	private String serverUri;
+
+	public PortAccessService(String serverUri) {
+		this.serverUri = serverUri;
+	}
+
+	public void start() {
+		ContainerProvider.getWebSocketContainer();
+	}
+
+}

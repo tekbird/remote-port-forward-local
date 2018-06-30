@@ -1,0 +1,16 @@
+package client;
+
+import java.nio.ByteBuffer;
+
+import javax.websocket.MessageHandler.Whole;
+
+public class WebSocketMessageHandler implements Whole<ByteBuffer> {
+
+
+	@Override
+	public void onMessage(ByteBuffer message) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

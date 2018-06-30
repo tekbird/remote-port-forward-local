@@ -1,0 +1,5 @@
+package net.portforward.server;
+
+public class WebsocketProxy {
+
+}

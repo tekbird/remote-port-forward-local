@@ -1,0 +1,62 @@
+package client;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+
+import javax.websocket.ContainerProvider;
+import javax.websocket.DeploymentException;
+import javax.websocket.WebSocketContainer;
+
+import org.pmw.tinylog.Logger;
+
+public class PortAccessService {
+
+	private URI serverUri;
+	private boolean isClearToSend = false;
+
+	public PortAccessService(String serverUri) {
+		this.serverUri = URI.create(serverUri);
+	}
+
+	public void start(Integer localPort) throws DeploymentException, IOException {
+		startLocalPort(localPort);
+		startRemotePort();
+	}
+
+	private void startRemotePort() throws DeploymentException, IOException {
+		WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+
+		container.connectToServer(new WebSocketEndpoint(), this.serverUri);
+	}
+
+	private void startLocalPort(Integer localPort) throws IOException {
+		InetSocketAddress sockAddr = new InetSocketAddress("localhost", localPort);
+		AsynchronousServerSocketChannel serverSock = AsynchronousServerSocketChannel.open().bind(sockAddr);
+		serverSock.accept(serverSock,
+				new CompletionHandler<AsynchronousSocketChannel, AsynchronousServerSocketChannel>() {
+
+					@Override
+					public void completed(AsynchronousSocketChannel sockChannel,
+							AsynchronousServerSocketChannel serverSock) {
+						serverSock.accept(serverSock, this);
+						startRead(sockChannel);
+
+					}
+
+					private void startRead(AsynchronousSocketChannel sockChannel) {
+						
+					}
+
+					@Override
+					public void failed(Throwable exc, AsynchronousServerSocketChannel serverSock) {
+						Logger.error("failed to accept a connection: {}", exc.getMessage());
+					}
+
+				});
+	}
+
+}

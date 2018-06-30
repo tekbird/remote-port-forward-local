@@ -1,0 +1,26 @@
+package client;
+
+import java.nio.ByteBuffer;
+
+import javax.websocket.MessageHandler.Whole;
+import javax.websocket.Session;
+
+import org.pmw.tinylog.Logger;
+
+public class WebSocketMessageHandler implements Whole<ByteBuffer> {
+
+
+	private Session session;
+
+	public WebSocketMessageHandler(Session session) {
+		this.session = session;
+	}
+
+	@Override
+	public void onMessage(ByteBuffer buffer) {
+		buffer.flip();
+		byte[] data = buffer.array();
+		Logger.info("received {} bytes", data.length);
+	}
+
+}

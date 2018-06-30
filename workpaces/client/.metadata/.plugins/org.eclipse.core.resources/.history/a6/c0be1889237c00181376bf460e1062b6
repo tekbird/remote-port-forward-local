@@ -1,0 +1,28 @@
+package client;
+
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
+
+import javax.websocket.MessageHandler.Whole;
+import javax.websocket.Session;
+
+import org.pmw.tinylog.Logger;
+
+public class WebSocketMessageHandler implements Whole<ByteBuffer> {
+
+
+	private AsynchronousSocketChannel serverSock;
+
+	public WebSocketMessageHandler(AsynchronousSocketChannel serverSock) {
+		this.serverSock = serverSock;
+	}
+
+	@Override
+	public void onMessage(ByteBuffer buffer) {
+		buffer.flip();
+		byte[] data = buffer.array();
+		this.serverSock.write(buffer);
+		Logger.info("received {} bytes", data.length);
+	}
+
+}

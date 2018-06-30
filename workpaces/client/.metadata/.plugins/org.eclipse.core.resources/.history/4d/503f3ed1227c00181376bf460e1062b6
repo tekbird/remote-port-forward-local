@@ -1,0 +1,17 @@
+package client;
+
+import java.nio.ByteBuffer;
+
+import javax.websocket.MessageHandler.Whole;
+
+import org.pmw.tinylog.Logger;
+
+public class WebSocketMessageHandler implements Whole<ByteBuffer> {
+
+
+	@Override
+	public void onMessage(ByteBuffer message) {
+		Logger.info("onMessage");
+	}
+
+}

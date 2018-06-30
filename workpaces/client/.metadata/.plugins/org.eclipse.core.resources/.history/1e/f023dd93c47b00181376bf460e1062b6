@@ -1,0 +1,40 @@
+package client;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import javax.websocket.*;
+
+import org.pmw.tinylog.Logger;
+
+@ClientEndpoint
+public class WebsocketEndpoint extends Endpoint {
+	
+	Session session;
+	private Consumer<ByteBuffer> onData;
+
+	public WebsocketEndpoint(Consumer<ByteBuffer> onData) {
+		this.onData = onData;
+	}
+
+	@Override
+	public void onOpen(Session session, EndpointConfig config) {	
+		this.session = session;
+	}
+	
+	@OnMessage
+	public void onMessage(byte[] bytes, Session session) {
+		Logger.info("received {} bytes from server", bytes.length);
+		if(onData != null) {
+			onData.accept(ByteBuffer.wrap(bytes));
+		}
+	}
+	
+	@OnClose
+	public void onClose(Session session, CloseReason reason) {
+		
+	}
+}

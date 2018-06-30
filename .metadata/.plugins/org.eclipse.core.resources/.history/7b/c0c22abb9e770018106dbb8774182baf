@@ -1,0 +1,42 @@
+package net.portforward.server;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+
+import javax.websocket.*;
+import javax.websocket.server.*;
+
+import org.pmw.tinylog.Logger;
+
+@ServerEndpoint(value = "/ep/{port}")
+public class EndPoint {
+
+	private UUID sessionId = UUID.randomUUID();
+	private Proxy proxy;
+
+	@OnOpen
+	public void onOpen(Session session, @PathParam("port") int port) throws IOException {
+		Logger.info("new session opened on {} with session id {}", port, this.sessionId);
+		this.proxy = new Proxy(port, session, sessionId);
+	}
+
+	@OnMessage
+	public void onMessage(Session session, byte[] bytes) throws IOException {
+		Logger.info("message of size {} received for session id {}", bytes.length, this.sessionId);
+		this.proxy.WriteData(bytes);
+	}
+
+	@OnClose
+	public void onClose(Session session) throws IOException {
+		Logger.info("client initiated close for session id {}", this.sessionId);
+		this.proxy.Close();
+	}
+
+	@OnError
+	public void onError(Session session, Throwable throwable) {
+		Logger.error("websocket session errored: {}", throwable.getMessage());
+		this.proxy.Close();
+	}
+}

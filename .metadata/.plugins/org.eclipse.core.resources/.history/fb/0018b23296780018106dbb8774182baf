@@ -1,0 +1,64 @@
+package service;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+import java.util.UUID;
+
+import org.pmw.tinylog.Logger;
+
+public class Main {
+
+	public static void main(String[] args) throws IOException {
+		AsynchronousServerSocketChannel server = AsynchronousServerSocketChannel.open();
+		server.bind(new InetSocketAddress("localhost", 24));
+		server.accept(server, new CompletionHandler<AsynchronousSocketChannel, AsynchronousServerSocketChannel>() {
+
+			@Override
+			public void completed(AsynchronousSocketChannel client, AsynchronousServerSocketChannel server) {
+				Logger.info("connection established");
+				StartRead(client, server);
+			}
+
+			@Override
+			public void failed(Throwable exc, AsynchronousServerSocketChannel attachment) {
+				Logger.error("failed to accept a client connection");
+			}
+
+		});
+
+		System.in.read();
+	}
+
+	private static void StartRead(AsynchronousSocketChannel socket, AsynchronousServerSocketChannel server) {
+		ByteBuffer buffer = ByteBuffer.allocate(2048);
+		if (socket.isOpen()) {
+			Logger.info("starting to read");
+			socket.read(buffer, socket, new CompletionHandler<Integer, AsynchronousSocketChannel>() {
+
+				@Override
+				public void completed(Integer size, AsynchronousSocketChannel attachment) {
+					Logger.info("read {} bytes", size);
+					if (size != -1) {
+
+						socket.write(buffer.get(buffer.array(), 0, size));
+						Logger.info("written {} bytes", size);
+
+					}
+
+					StartRead(socket, server);
+				}
+
+				@Override
+				public void failed(Throwable exc, AsynchronousSocketChannel attachment) {
+				}
+
+			});
+		} else {
+		}
+	}
+
+}

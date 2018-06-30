@@ -1,0 +1,105 @@
+package net.portforward.server;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+import java.util.concurrent.Future;
+
+import javax.websocket.OnClose;
+import javax.websocket.OnError;
+import javax.websocket.OnMessage;
+import javax.websocket.OnOpen;
+import javax.websocket.Session;
+import javax.websocket.server.PathParam;
+import javax.websocket.server.ServerEndpoint;
+import org.pmw.tinylog.Logger;
+
+@ServerEndpoint(value = "/ep/{port}")
+public class EndPoint {
+
+	AsynchronousSocketChannel channel;
+	ByteBuffer buffer = ByteBuffer.allocate(4096);
+	Future<Integer> writeTaskQueue = null;
+
+	@OnOpen
+	public void onOpen(Session session, @PathParam("port") int port) throws IOException {
+		Logger.info("onOpen: {}", session.getId());
+
+		AsynchronousSocketChannel sockChannel = AsynchronousSocketChannel.open();
+		InetSocketAddress address = new InetSocketAddress("localhost", port);
+		sockChannel.connect(address, sockChannel, new CompletionHandler<Void, AsynchronousSocketChannel>() {
+			@Override
+			public void completed(Void result, AsynchronousSocketChannel socketChannel) {
+
+				Logger.info("connected to server on port {}", port);
+
+				channel = socketChannel;
+
+				startRead(session, sockChannel);
+			}
+
+			private void startRead(Session session, AsynchronousSocketChannel sockChannel) {
+				sockChannel.read(buffer, null, new CompletionHandler<Integer, Void>() {
+
+					@Override
+					public void completed(Integer length, Void v) {
+						if (length > 0) {
+							buffer.flip();
+							Logger.info("received {} bytes", length);
+							try {
+								session.getBasicRemote().sendBinary(buffer);
+								Logger.info("sent {} bytes to websocket", length);
+							} catch (IOException e) {
+								Logger.error("failed to send to websocket: {}", e.getMessage());
+							}
+						}
+						if (sockChannel.isOpen()) {
+							startRead(session, sockChannel);
+						} else {
+							try {
+								sockChannel.close();
+							} catch (IOException e) {
+								e.printStackTrace();
+							}
+						}
+					}
+
+					@Override
+					public void failed(Throwable exc, Void v) {
+						Logger.error("failed to read: {}", exc.getMessage());
+					}
+
+				});
+			}
+
+			@Override
+			public void failed(Throwable exc, AsynchronousSocketChannel channel) {
+				Logger.info("failed to connect to server: {}", exc.getMessage());
+			}
+
+		});
+
+	}
+
+	@OnMessage
+	public void onMessage(Session session, byte[] bytes) throws IOException {
+		Logger.info("onMessage: {}", session.getId());
+
+		Future<Integer> writeTask = this.channel.write(ByteBuffer.wrap(bytes));
+
+		Logger.info("written {} bytes", bytes.length);
+	}
+
+	@OnClose
+	public void onClose(Session session) throws IOException {
+		Logger.info("onClose: {}", session.getId());
+		
+	}
+
+	@OnError
+	public void onError(Session session, Throwable throwable) {
+		Logger.info("onError: {} {}", session.getId(), throwable.getMessage());
+	}
+}

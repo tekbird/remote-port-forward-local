@@ -1,0 +1,25 @@
+package client;
+
+import org.pmw.tinylog.Logger;
+
+public class Main {
+
+	public static void main(String[] args) {
+		if (args.length == 2) {
+			Logger.info("args[0]: {}", args[0]);
+			Logger.info("args[1]: {}", args[1]);
+			Integer localPort = Integer.parseInt(args[0]);
+			Integer remotePort = Integer.parseInt(args[1]);
+			Proxy proxy = new Proxy(Integer.parseInt(localPort, remotePort));
+		} else {
+			Logger.error("invalid number of arguments, expected two. 1: local port, 2: remote port");
+		}
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				Logger.info("application shutting down");
+			}
+		});
+	}
+
+}

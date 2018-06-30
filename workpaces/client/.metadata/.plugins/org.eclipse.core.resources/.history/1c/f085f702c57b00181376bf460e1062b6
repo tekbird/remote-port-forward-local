@@ -1,0 +1,35 @@
+package client;
+
+import java.io.IOException;
+
+import org.pmw.tinylog.Logger;
+
+public class Main {
+
+	public static void main(String[] args) throws IOException {
+		if (args.length == 3) {
+			Logger.info("args[0]: {}", args[0]);
+			Logger.info("args[1]: {}", args[1]);
+			Logger.info("args[2]: {}", args[2]);
+			Integer localPort = Integer.parseInt(args[0]);
+			Integer remotePort = Integer.parseInt(args[1]);
+			String websocketUrl = args[2];
+			String serverUri = args[2] + "/" + remotePort;
+			proxy = new Proxy(localPort, serverUri);
+			proxy.Start();
+			Logger.info("proxy started, press enter to exit");
+			System.in.read();
+		} else {
+			Logger.error("invalid number of arguments, expected two. 1: local port, 2: remote port");
+		}
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			@Override
+			public void run() {
+				Logger.info("application shutting down");
+				if (proxy != null)
+					proxy.Stop();
+			}
+		});
+	}
+
+}

@@ -1,0 +1,36 @@
+package client;
+
+import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.channels.AsynchronousServerSocketChannel;
+
+public class Proxy {
+
+	private Integer remotePort;
+	private Integer localPort;
+	private AsynchronousServerSocketChannel server;
+	private static String LOCALHOST = "localhost";
+
+	public Proxy(Integer localPort, Integer remotePort) {
+		this.localPort = localPort;
+		this.remotePort = remotePort;
+	}
+
+	public void Start() {
+		StartLocalServer();
+		ConnectRemoteServer();
+	}
+
+	private void ConnectRemoteServer() {
+
+	}
+
+	private void StartLocalServer() throws IOException {
+		server = AsynchronousServerSocketChannel.open();
+		server.bind(new InetSocketAddress(LOCALHOST, this.localPort));
+	}
+
+	public void Stop() {
+	}
+
+}

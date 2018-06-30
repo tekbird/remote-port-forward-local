@@ -1,0 +1,22 @@
+package client;
+
+import javax.websocket.*;
+
+@ClientEndpoint
+public class WebsocketEndpoint extends Endpoint {
+
+	@Override
+	public void onOpen(Session session, EndpointConfig config) {	
+		
+	}
+	
+	@OnMessage
+	public void onMessage(byte[] bytes, Session session) {
+		
+	}
+	
+	@OnClose
+	public void onClose(Session session, CloseReason reason) {
+		
+	}
+}

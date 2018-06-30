@@ -1,0 +1,25 @@
+package client;
+
+import java.io.IOException;
+import java.net.URI;
+
+import javax.websocket.ContainerProvider;
+import javax.websocket.DeploymentException;
+import javax.websocket.WebSocketContainer;
+
+public class PortAccessService {
+
+	private URI serverUri;
+
+	public PortAccessService(String serverUri) {
+		this.serverUri = URI.create(serverUri);
+	}
+
+	public void start(Integer localPort) throws DeploymentException, IOException {
+		startLocalPort();
+		WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+		
+		container.connectToServer(new WebSocketEndpoint(), this.serverUri);
+	}
+
+}
