@@ -1,0 +1,19 @@
+package net.portforward.server;
+
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
+
+import javax.websocket.MessageHandler.Whole;
+
+public class IncomingMessageHandler implements Whole<ByteBuffer> {
+
+	public IncomingMessageHandler(AsynchronousSocketChannel sockChannel) {
+		// TODO Auto-generated constructor stub
+	}
+
+	@Override
+	public void onMessage(ByteBuffer message) {
+		
+	}
+
+}

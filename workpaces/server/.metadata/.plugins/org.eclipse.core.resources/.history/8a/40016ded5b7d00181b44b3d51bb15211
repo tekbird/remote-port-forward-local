@@ -1,0 +1,12 @@
+package net.portforward.server;
+
+import javax.websocket.MessageHandler.Whole;
+
+public class IncomingMessageHandler implements Whole {
+
+	@Override
+	public void onMessage(Object message) {
+		
+	}
+
+}

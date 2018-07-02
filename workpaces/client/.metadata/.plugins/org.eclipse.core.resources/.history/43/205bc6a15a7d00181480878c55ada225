@@ -1,0 +1,126 @@
+package client;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousServerSocketChannel;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.CompletionHandler;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import javax.websocket.*;
+import javax.websocket.MessageHandler.Partial;
+import javax.websocket.MessageHandler.Whole;
+
+import org.pmw.tinylog.Logger;
+
+import com.google.gson.Gson;
+
+@ClientEndpoint
+public class WebSocketEndpoint extends Endpoint {
+
+	private AsynchronousSocketChannel serverSock;
+	private ByteBuffer buffer = ByteBuffer.allocate(4096);
+	private Queue<ByteBuffer> bufferQueue = new LinkedList<ByteBuffer>();
+	private Object locker = new Object();
+	private static ScheduledExecutorService bufferScheduler = new ScheduledThreadPoolExecutor(4);
+	private Runnable bufferFlusher = null;
+	private Gson jsonHandler = new Gson();
+	private ScheduledFuture<?> scheduledFuture;
+
+	public WebSocketEndpoint(AsynchronousSocketChannel sockChannel) {
+		this.serverSock = sockChannel;
+	}
+
+	@Override
+	public void onOpen(Session session, EndpointConfig config) {
+		Logger.info("onOpen: {}", session.getId());
+		Partial<ByteBuffer> onMessageHandler = new WebSocketMessageHandler(serverSock);
+		session.addMessageHandler(ByteBuffer.class, onMessageHandler);
+		bufferFlusher = new Runnable() {
+
+			@Override
+			public void run() {
+				Queue<ByteBuffer> currentQueue = null;
+				synchronized (locker) {
+					currentQueue = bufferQueue;
+					bufferQueue = new LinkedList<ByteBuffer>();
+				}
+				byte[][] dataToSend = new byte[currentQueue.size()][];
+				int dataIndex = 0;
+				for (ByteBuffer bb : currentQueue) {
+					byte[] array = new byte[bb.limit()];
+					bb.get(array, 0, bb.limit());
+					dataToSend[dataIndex++] = array;
+				}
+
+				if (dataToSend.length > 0) {
+					try {
+						BufferedDataContainer container = new BufferedDataContainer();
+						container.setData(dataToSend);
+						session.getBasicRemote().sendText(jsonHandler.toJson(container));
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				scheduledFuture = bufferScheduler.schedule(bufferFlusher, 100, TimeUnit.MILLISECONDS);
+			}
+
+		};
+		startRead(session);
+		scheduledFuture = bufferScheduler.schedule(bufferFlusher, 100, TimeUnit.MILLISECONDS);
+	}
+
+	private void startRead(Session session) {
+
+		this.serverSock.read(buffer, null, new CompletionHandler<Integer, Void>() {
+
+			@Override
+			public void completed(Integer length, Void v) {
+				if (length > 0) {
+					buffer.flip();
+					
+				}
+				if (serverSock.isOpen()) {
+
+					startRead(session);
+				}
+			}
+
+			@Override
+			public void failed(Throwable exc, Void v) {
+				try {
+					session.close();
+					bufferFlusher = null;
+					scheduledFuture.cancel(true);
+				} catch (IOException e) {
+					Logger.error("startRead failed with error {}", e.getMessage());
+				}
+			}
+
+		});
+	}
+
+	@Override
+	public void onClose(Session session, CloseReason reason) {
+		Logger.info("onClose: {}", session.getId());
+		if (serverSock.isOpen()) {
+			try {
+				serverSock.close();
+			} catch (IOException e) {
+				Logger.error("failed to close socket: {}", e.getMessage());
+				e.printStackTrace();
+			}
+		}
+	}
+}

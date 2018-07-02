@@ -3,10 +3,14 @@ package net.portforward.server;
 import javax.ws.rs.ApplicationPath;
 
 import org.glassfish.jersey.server.ResourceConfig;
+import org.pmw.tinylog.Logger;
 
 @ApplicationPath("api")
 public class Application extends ResourceConfig {
 	public Application() {
-        packages("net.portforward.server");
-    }
+		packages("net.portforward.server");
+		Logger.getConfiguration()
+				.formatPattern("[{date:yyyy-MM-dd HH:mm:ss.S} {level}] [{thread}] {class}.{method}: {message}")
+				.activate();
+	}
 }

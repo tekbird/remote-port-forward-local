@@ -33,22 +33,11 @@ public class PortAccessService {
 						serverSock.accept(serverSock, this); // for more connections
 
 						Logger.info("client connected");
-						
-						try {
-							sockChannel.setOption(java.net.StandardSocketOptions.TCP_NODELAY, true);
-							sockChannel.setOption(java.net.StandardSocketOptions.SO_SNDBUF, 4096);
-							sockChannel.setOption(java.net.StandardSocketOptions.SO_RCVBUF, 4096);
-						} catch (IOException e1) {
-							
-							e1.printStackTrace();
-						}
 
 						try {
 							WebSocketContainer container = ContainerProvider.getWebSocketContainer();
 							WebSocketEndpoint endpoint = new WebSocketEndpoint(sockChannel);
 							container.connectToServer(endpoint, remoteUri);
-
-							Logger.info("connected to remote server: {}", remoteUri);
 						} catch (DeploymentException | IOException e) {
 							Logger.error("failed to connect to remote server: {}", e.getMessage());
 						}

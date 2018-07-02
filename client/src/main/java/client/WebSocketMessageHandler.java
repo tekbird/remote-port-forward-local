@@ -6,10 +6,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import javax.websocket.MessageHandler.Partial;
+import javax.websocket.MessageHandler.Whole;
 
 import org.pmw.tinylog.Logger;
 
-public class WebSocketMessageHandler implements Partial<ByteBuffer> {
+public class WebSocketMessageHandler implements Whole<ByteBuffer> {
 
 	private AsynchronousSocketChannel serverSock;
 
@@ -18,14 +19,15 @@ public class WebSocketMessageHandler implements Partial<ByteBuffer> {
 	}
 
 	@Override
-	public void onMessage(ByteBuffer partialMessage, boolean last) {
-		Logger.info("received {} bytes from remote server", partialMessage.limit());
+	public void onMessage(ByteBuffer message) {
+		int limit = message.limit();
+		Logger.info("received {} bytes from websocket", limit);
 		try {
-			Future<Integer> writeTask = this.serverSock.write(partialMessage);
-			Integer writtenLength = writeTask.get();
-			Logger.info("sent {} bytes to socket channel", writtenLength);
+			this.serverSock.write(message).get();
+			Logger.info("written {} bytes to service socket", limit);
 		} catch (InterruptedException | ExecutionException e) {
-			e.printStackTrace();
+			Logger.error("failed to write data received from websocket to local tcp socket with error {}",
+					e.getMessage());
 		}
 	}
 

@@ -1,0 +1,62 @@
+package net.portforward.server;
+
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousSocketChannel;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+
+import javax.websocket.MessageHandler.Whole;
+
+import org.pmw.tinylog.Logger;
+
+public class IncomingMessageHandler implements Whole<ByteBuffer> {
+
+	private AsynchronousSocketChannel sockChannel;
+	private LinkedList<ByteBuffer> incomingBuffer = new LinkedList<ByteBuffer>();
+	private Object locker = new Object();
+
+	public IncomingMessageHandler() {
+	}
+	
+	public void setLocalSocket(AsynchronousSocketChannel serviceSocket) {
+		
+		synchronized (locker) {
+			this.sockChannel = serviceSocket;
+			while(!this.incomingBuffer.isEmpty()) {
+				ByteBuffer topBuffer = this.incomingBuffer.remove();
+				try {
+					this.sockChannel.write(topBuffer).get();
+				} catch (InterruptedException | ExecutionException e) {
+					Logger.error("failed to write buffered data with error {}", e.getMessage());
+				}
+			}
+		}
+		
+	}
+
+	@Override
+	public void onMessage(ByteBuffer message) {
+		Logger.info("recieved {} bytes from websocket", message.limit());
+		AsynchronousSocketChannel socketChannel = null;
+		synchronized (locker) {
+			socketChannel = this.sockChannel;
+			if (socketChannel == null) {
+				incomingBuffer.add(message);
+				Logger.info("messaged added to queue while waiting for local socket");
+			}
+		}
+		if (socketChannel == null) {
+			return;
+		} else {
+			Future<Integer> writeTask = this.sockChannel.write(message);
+			try {
+				writeTask.get();
+			} catch (InterruptedException | ExecutionException e) {
+				Logger.error("failed to write data to socket with error {}", e.getMessage());
+			}
+		}
+	}
+
+}

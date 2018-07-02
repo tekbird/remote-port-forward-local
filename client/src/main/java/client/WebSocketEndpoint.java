@@ -30,13 +30,6 @@ import com.google.gson.Gson;
 public class WebSocketEndpoint extends Endpoint {
 
 	private AsynchronousSocketChannel serverSock;
-	private ByteBuffer buffer = ByteBuffer.allocate(4096);
-	private Queue<ByteBuffer> bufferQueue = new LinkedList<ByteBuffer>();
-	private Object locker = new Object();
-	private static ScheduledExecutorService bufferScheduler = new ScheduledThreadPoolExecutor(4);
-	private Runnable bufferFlusher = null;
-	private Gson jsonHandler = new Gson();
-	private ScheduledFuture<?> scheduledFuture;
 
 	public WebSocketEndpoint(AsynchronousSocketChannel sockChannel) {
 		this.serverSock = sockChannel;
@@ -44,72 +37,45 @@ public class WebSocketEndpoint extends Endpoint {
 
 	@Override
 	public void onOpen(Session session, EndpointConfig config) {
-		Logger.info("onOpen: {}", session.getId());
-		Partial<ByteBuffer> onMessageHandler = new WebSocketMessageHandler(serverSock);
+		Whole<ByteBuffer> onMessageHandler = new WebSocketMessageHandler(serverSock);
 		session.addMessageHandler(ByteBuffer.class, onMessageHandler);
-		bufferFlusher = new Runnable() {
-
-			@Override
-			public void run() {
-				Queue<ByteBuffer> currentQueue = null;
-				synchronized (locker) {
-					currentQueue = bufferQueue;
-					bufferQueue = new LinkedList<ByteBuffer>();
-				}
-				byte[][] dataToSend = new byte[currentQueue.size()][];
-				int dataIndex = 0;
-				for (ByteBuffer bb : currentQueue) {
-					byte[] array = new byte[bb.limit()];
-					bb.get(array, 0, bb.limit());
-					dataToSend[dataIndex++] = array;
-				}
-
-				if (dataToSend.length > 0) {
-					try {
-						BufferedDataContainer container = new BufferedDataContainer();
-						container.setData(dataToSend);
-						session.getBasicRemote().sendText(jsonHandler.toJson(container));
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-				scheduledFuture = bufferScheduler.schedule(bufferFlusher, 100, TimeUnit.MILLISECONDS);
-			}
-
-		};
+		Logger.info("connected to remote server");
 		startRead(session);
-		scheduledFuture = bufferScheduler.schedule(bufferFlusher, 100, TimeUnit.MILLISECONDS);
 	}
 
 	private void startRead(Session session) {
 
-		this.serverSock.read(buffer, null, new CompletionHandler<Integer, Void>() {
+		final ByteBuffer buffer = ByteBuffer.allocate(2048);
 
+		this.serverSock.read(buffer, null, new CompletionHandler<Integer, Void>() {
 			@Override
 			public void completed(Integer length, Void v) {
+				if (length == -1) {
+					Logger.warn("socket connection is being closed");
+					try {
+						session.close();
+						Logger.info("closed websocket connection");
+					} catch (IOException e) {
+						Logger.error("failed to close websocket connection with error {}", e.getMessage());
+					}
+				}
 				if (length > 0) {
 					buffer.flip();
-					synchronized (locker) {
-						bufferQueue.add(buffer);
+					try {
+						Logger.info("sending {} bytes to websocket", buffer.limit());
+						session.getBasicRemote().sendBinary(buffer);
+					} catch (IOException e) {
+						Logger.error("failed to send data to remote server with error {}", e.getMessage());
 					}
 				}
 				if (serverSock.isOpen()) {
-
 					startRead(session);
 				}
 			}
 
 			@Override
 			public void failed(Throwable exc, Void v) {
-				Logger.error("failed to read: {}", exc.getMessage());
-				try {
-					session.close();
-					bufferFlusher = null;
-					scheduledFuture.cancel(true);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				Logger.error("failed to read from socket with error {}", exc.getMessage());
 			}
 
 		});
@@ -117,14 +83,12 @@ public class WebSocketEndpoint extends Endpoint {
 
 	@Override
 	public void onClose(Session session, CloseReason reason) {
-		Logger.info("onClose: {}", session.getId());
-		if (serverSock.isOpen()) {
-			try {
-				serverSock.close();
-			} catch (IOException e) {
-				Logger.error("failed to close socket: {}", e.getMessage());
-				e.printStackTrace();
-			}
+		Logger.warn("closing websocket connection");
+		try {
+			this.serverSock.close();
+			Logger.info("closed socket connection");
+		} catch (IOException e) {
+			Logger.error("failed to close socket connection with error {}", e.getMessage());
 		}
 	}
 }
