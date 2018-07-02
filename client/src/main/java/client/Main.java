@@ -15,9 +15,9 @@ public class Main {
 				.activate();
 		Logger.info("client starting");
 		if (args.length == 3) {
-			Integer localPort = 5433;// Integer.parseInt(args[0]);
-			Integer remotePort = 5432;// Integer.parseInt(args[1]);
-			String websocketUrl = "ws://localhost:8080/server/ep";// args[2];
+			Integer localPort = Integer.parseInt(args[0]);
+			Integer remotePort = Integer.parseInt(args[1]);
+			String websocketUrl = args[2];
 			String serverUri = websocketUrl + "/" + remotePort;
 			registerShutdown();
 			PortAccessService portAccessService = new PortAccessService();

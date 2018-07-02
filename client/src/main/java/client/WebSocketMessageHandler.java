@@ -3,9 +3,7 @@ package client;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
-import javax.websocket.MessageHandler.Partial;
 import javax.websocket.MessageHandler.Whole;
 
 import org.pmw.tinylog.Logger;
